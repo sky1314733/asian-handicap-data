@@ -2,15 +2,20 @@ name: Daily Fetch Matches
 
 on:
   schedule:
-    - cron: '0 2,9 * * *'  # 每天北京时间10点和17点
+    - cron: '0 2,9 * * *'
   workflow_dispatch:
+
+permissions:
+  contents: write
 
 jobs:
   build:
     runs-on: ubuntu-latest
-    steps:
-    - uses: actions/checkout@v3
     
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v3
+      
     - name: Set up Python
       uses: actions/setup-python@v4
       with:
@@ -18,11 +23,13 @@ jobs:
     
     - name: Run script
       run: python fetch_matches.py
-    
-    - name: Commit files
+      
+    - name: Configure Git
       run: |
         git config --local user.email "action@github.com"
         git config --local user.name "GitHub Action"
+    
+    - name: Commit and push
+      run: |
         git add matches.json
-        git commit -m "Update matches" -a || exit 0
-        git push
+        git diff --staged --quiet || (git commit -m "Update matches $(date +'%Y-%m-%d')" && git push)
